@@ -1,0 +1,19 @@
+{
+    "name": "divulgueregional/api-nfse",
+    "description": "Api para gerar nota fiscal de serviço no ambiente nacional.",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Divulgueregional\\ApiNfse\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Roseno Matos",
+            "email": "rosenomatos@gmail.com"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "^7.0"
+    }
+}
