@@ -5,7 +5,6 @@ Gerar uma NFS-e.
 
 ```php
     require '../../../vendor/autoload.php';
-
     use Divulgueregional\ApiNfse\NFSeNacional;
 
     // 1. Configurações e Certificado
