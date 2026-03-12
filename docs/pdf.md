@@ -17,7 +17,7 @@ Busca o pdf da nota de serviço no Ambiente Nacional.
         'cert_password' => '123456'
     ];
 
-    $tpAmb = 2; // 2 = Homologação, 1 - produção
+    $tpAmb = 2; // 2= Homologação, 1= produção
     $nfse = new NFSeNacional($config, $tpAmb);
     $chaveAcesso = '';
 
