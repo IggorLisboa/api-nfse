@@ -24,7 +24,7 @@ Busca o xml da nota de serviço no Ambiente Nacional.
 
 
     $pdfContent = $retorno['pdfContent']; // pdf
-    $nomeArquivo = "{$chaveAcesso}.pdf";
+    $nomeArquivo = "{$chaveAcesso}.xml";
 
     // $modo = 'attachment'; // faz download
     $modo = 'inline'; // abre no navegador
