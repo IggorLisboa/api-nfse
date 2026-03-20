@@ -13,3 +13,7 @@ No ambiente de homologação você pode testar com qualquer cidade e CPF/CNPJ v�
 ## API NFS-e
 
 - enviarDPS (Gerar NFS-e)
+- cancelarNFSe (Cancelar NFS-e)
+- consultarNFSe (Consultar NFS-e)
+- obterPdfNfse (Obter PDF da NFS-e)
+- baixarDfeContribuinte (Baixar DFe do contribuinte)

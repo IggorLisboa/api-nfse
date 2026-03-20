@@ -12,7 +12,7 @@ composer require divulgueregional/api-nfse
 <b>Pela última tag: </b>
 
 ```bash
-composer update divulgueregional/api-nfse 1.1.0
+composer update divulgueregional/api-nfse 1.1.1
 ```
 
 Acesse a pasta docs e leia o README.md
@@ -33,8 +33,10 @@ Para detalhes profundos sobre a API NFSe Ambiente Nacional, consulte os portais 
 ## O QUE VOCÊ PODE UTILIZAR
 
 - Gerar nota
-<!-- - Cancelar Nota -->
-<!-- - Consultar Nota -->
+- Cancelar Nota
+- Consultar Nota
+- Obter pdf
+- Baixar DFe
 
 ## Autor
 
