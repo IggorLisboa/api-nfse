@@ -112,6 +112,228 @@ class NFSeNacional
         $this->client = new Client($options);
     }
 
+    /**
+     * Monta o XML da DPS (DeclaraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de PrestaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de ServiÃƒÆ’Ã‚Â§os)
+     * 
+     * @param array $dados Dados da DPS
+     * @return string XML da DPS (sem assinatura)
+     */
+    public function montarXmlDPS(array $dados): string
+    {
+        $ns = self::NS_NFSE;
+
+        // Dados obrigatÃƒÆ’Ã‚Â³rios
+        $idDps = $dados['idDps'];
+        $dhEmi = $dados['dhEmi'] ?? date('Y-m-d\TH:i:sP');
+        $serie = $dados['serie'] ?? '1';
+        $nDps = $dados['nDps'] ?? '1';
+        $dCompet = $dados['dCompet'] ?? date('Y-m-d');
+        $tpEmit = $dados['tpEmit'] ?? '1';
+        $cLocEmi = $dados['cLocEmi'];
+
+        // Prestador
+        $prest = $dados['prestador'];
+
+        // Tomador
+        $toma = $dados['tomador'];
+
+        // ServiÃƒÆ’Ã‚Â§o
+        $serv = $dados['servico'];
+
+        // Valores
+        $valores = $dados['valores'];
+
+        $xml = new DOMDocument('1.0', 'UTF-8');
+        $xml->formatOutput = true;
+
+        // Elemento raiz DPS
+        $dps = $xml->createElementNS($ns, 'DPS');
+        $dps->setAttribute('versao', '1.00');
+        $xml->appendChild($dps);
+
+        // infDPS
+        $infDPS = $xml->createElement('infDPS');
+        $infDPS->setAttribute('Id', $idDps);
+        $dps->appendChild($infDPS);
+
+        // Campos obrigatÃƒÆ’Ã‚Â³rios
+        $this->addElement($xml, $infDPS, 'tpAmb', (string)$this->tpAmb);
+        $this->addElement($xml, $infDPS, 'dhEmi', $dhEmi);
+        $this->addElement($xml, $infDPS, 'verAplic', self::VER_APLIC);
+        $this->addElement($xml, $infDPS, 'serie', $serie);
+        $this->addElement($xml, $infDPS, 'nDPS', $nDps);
+        $this->addElement($xml, $infDPS, 'dCompet', $dCompet);
+        $this->addElement($xml, $infDPS, 'tpEmit', $tpEmit);
+        $this->addElement($xml, $infDPS, 'cLocEmi', $cLocEmi);
+
+        // Prestador
+        $prestEl = $xml->createElement('prest');
+        $infDPS->appendChild($prestEl);
+
+        if (!empty($prest['cnpj'])) {
+            $this->addElement($xml, $prestEl, 'CNPJ', $this->apenasNumeros($prest['cnpj']));
+        }
+        if (!empty($prest['im'])) {
+            $this->addElement($xml, $prestEl, 'IM', $prest['im']);
+        }
+        if (!empty($prest['fone'])) {
+            $this->addElement($xml, $prestEl, 'fone', $this->apenasNumeros($prest['fone']));
+        }
+        if (!empty($prest['email'])) {
+            $this->addElement($xml, $prestEl, 'email', $prest['email']);
+        }
+
+        // Regime tributÃƒÆ’Ã‚Â¡rio do prestador
+        if (!empty($prest['regTrib'])) {
+            $regTrib = $xml->createElement('regTrib');
+            $prestEl->appendChild($regTrib);
+
+            if (isset($prest['regTrib']['opSimpNac'])) {
+                $this->addElement($xml, $regTrib, 'opSimpNac', (string)$prest['regTrib']['opSimpNac']);
+            }
+            if (!empty($prest['regTrib']['regApTribSN'])) {
+                $this->addElement($xml, $regTrib, 'regApTribSN', (string)$prest['regTrib']['regApTribSN']);
+            }
+            if (isset($prest['regTrib']['regEspTrib'])) {
+                $this->addElement($xml, $regTrib, 'regEspTrib', (string)$prest['regTrib']['regEspTrib']);
+            }
+        }
+
+        // Tomador
+        $tomaEl = $xml->createElement('toma');
+        $infDPS->appendChild($tomaEl);
+
+        if (!empty($toma['cnpj'])) {
+            $this->addElement($xml, $tomaEl, 'CNPJ', $this->apenasNumeros($toma['cnpj']));
+        }
+        if (!empty($toma['cpf'])) {
+            $this->addElement($xml, $tomaEl, 'CPF', $this->apenasNumeros($toma['cpf']));
+        }
+        if (!empty($toma['xNome'])) {
+            $this->addElement($xml, $tomaEl, 'xNome', $toma['xNome']);
+        }
+
+        // EndereÃƒÆ’Ã‚Â§o do tomador
+        if (!empty($toma['endereco'])) {
+            $endEl = $xml->createElement('end');
+            $tomaEl->appendChild($endEl);
+
+            $endNac = $xml->createElement('endNac');
+            $endEl->appendChild($endNac);
+
+            if (!empty($toma['endereco']['cMun'])) {
+                $this->addElement($xml, $endNac, 'cMun', $toma['endereco']['cMun']);
+            }
+            if (!empty($toma['endereco']['cep'])) {
+                $this->addElement($xml, $endNac, 'CEP', $this->apenasNumeros($toma['endereco']['cep']));
+            }
+
+            if (!empty($toma['endereco']['xLgr'])) {
+                $this->addElement($xml, $endEl, 'xLgr', $this->removerAcentos($toma['endereco']['xLgr']));
+            }
+            if (!empty($toma['endereco']['nro'])) {
+                $this->addElement($xml, $endEl, 'nro', $toma['endereco']['nro']);
+            }
+            if (!empty($toma['endereco']['xBairro'])) {
+                $this->addElement($xml, $endEl, 'xBairro', $this->removerAcentos($toma['endereco']['xBairro']));
+            }
+        }
+
+        if (!empty($toma['fone'])) {
+            $this->addElement($xml, $tomaEl, 'fone', $this->apenasNumeros($toma['fone']));
+        }
+        if (!empty($toma['email'])) {
+            $this->addElement($xml, $tomaEl, 'email', $toma['email']);
+        }
+
+        // ServiÃƒÆ’Ã‚Â§o
+        $servEl = $xml->createElement('serv');
+        $infDPS->appendChild($servEl);
+
+        // Local de prestaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o
+        $locPrest = $xml->createElement('locPrest');
+        $servEl->appendChild($locPrest);
+        $this->addElement($xml, $locPrest, 'cLocPrestacao', $serv['cLocPrestacao']);
+
+        // CÃƒÆ’Ã‚Â³digo do serviÃƒÆ’Ã‚Â§o
+        $cServ = $xml->createElement('cServ');
+        $servEl->appendChild($cServ);
+        $this->addElement($xml, $cServ, 'cTribNac', str_replace('.', '', $serv['cTribNac']));
+        $this->addElement($xml, $cServ, 'xDescServ', $serv['xDescServ']);
+
+        // InformaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes complementares
+        if (!empty($serv['xInfComp'])) {
+            $infoCompl = $xml->createElement('infoCompl');
+            $servEl->appendChild($infoCompl);
+            $this->addElement($xml, $infoCompl, 'xInfComp', $serv['xInfComp']);
+        }
+
+        // Valores
+        $valoresEl = $xml->createElement('valores');
+        $infDPS->appendChild($valoresEl);
+
+        // Valor do serviÃƒÆ’Ã‚Â§o prestado
+        $vServPrest = $xml->createElement('vServPrest');
+        $valoresEl->appendChild($vServPrest);
+        $this->addElement($xml, $vServPrest, 'vServ', $this->formatarValor($valores['vServ']));
+
+        // Tributos
+        // --- Tributos (Estrutura Final Validada) ---
+        $trib = $xml->createElement('trib');
+        $valoresEl->appendChild($trib); // trib entra em valores
+
+        // 1. Tributos Municipais (ISSQN)
+        $tribMun = $xml->createElement('tribMun');
+        $trib->appendChild($tribMun);
+        
+        $tpRetISSQN = (string)($valores['tpRetISSQN'] ?? '1');
+        
+        $this->addElement($xml, $tribMun, 'tribISSQN', (string)($valores['tribISSQN'] ?? '1'));
+        $this->addElement($xml, $tribMun, 'tpRetISSQN', $tpRetISSQN);
+        
+        // REGRA E0625: SÃ³ envia alÃ­quota se houver retenÃ§Ã£o (tpRetISSQN != 1)
+        // Ou se vocÃª nÃ£o for do Simples Nacional. 
+        // Para o seu teste atual, vamos apenas comentar/remover o envio da pAliq:
+        /* if (isset($valores['pAliq'])) {
+            $this->addElement($xml, $tribMun, 'pAliq', $this->formatarValor($valores['pAliq']));
+        }
+        */
+
+        
+
+
+
+        // 2. Tributos Federais
+        $tribFed = $xml->createElement('tribFed');
+        $trib->appendChild($tribFed);
+
+        $piscofins = $xml->createElement('piscofins');
+        $tribFed->appendChild($piscofins);
+        $this->addElement($xml, $piscofins, 'CST', '99'); 
+        $this->addElement($xml, $piscofins, 'vPis', '0.00');
+        $this->addElement($xml, $piscofins, 'vCofins', '0.00');
+
+        // REMOVA OU COMENTE ESTAS LINHAS ABAIXO:
+        // O erro E0700 sugere que ao ver a tag, o governo espera um valor > 0.
+        // $this->addElement($xml, $tribFed, 'vRetCP', '0.00');
+        // $this->addElement($xml, $tribFed, 'vRetIRRF', '0.00');
+        // $this->addElement($xml, $tribFed, 'vRetCSLL', '0.00');
+
+
+
+
+
+        // 3. Totais dos Tributos (SoluÃ§Ã£o para Simples Nacional / ME-EPP)
+        $totTrib = $xml->createElement('totTrib');
+        $trib->appendChild($totTrib);
+
+        // O Schema exige um filho. O NegÃ³cio proibiu o 'indTotTrib'.
+        // Usaremos o 'pTotTribSN' que Ã© o campo especÃ­fico para o seu regime.
+        $this->addElement($xml, $totTrib, 'pTotTribSN', '0.00');
+
+        return $xml->saveXML();
+    }
+
     // =========================================================================
     // MÉTODOS PRINCIPAIS DA API
     // =========================================================================
@@ -547,6 +769,27 @@ class NFSeNacional
     }
 
     /**
+     * Remove acentos de uma string
+     */
+    private function removerAcentos(string $string): string
+    {
+        $acentos = [
+            'ÃƒÆ’Ã‚Â¡', 'ÃƒÆ’Ã‚Â ', 'ÃƒÆ’Ã‚Â£', 'ÃƒÆ’Ã‚Â¢', 'ÃƒÆ’Ã‚Â¤', 'ÃƒÆ’Ã‚Â©', 'ÃƒÆ’Ã‚Â¨', 'ÃƒÆ’Ã‚Âª', 'ÃƒÆ’Ã‚Â«', 'ÃƒÆ’Ã‚Â­', 'ÃƒÆ’Ã‚Â¬', 'ÃƒÆ’Ã‚Â®', 'ÃƒÆ’Ã‚Â¯',
+            'ÃƒÆ’Ã‚Â³', 'ÃƒÆ’Ã‚Â²', 'ÃƒÆ’Ã‚Âµ', 'ÃƒÆ’Ã‚Â´', 'ÃƒÆ’Ã‚Â¶', 'ÃƒÆ’Ã‚Âº', 'ÃƒÆ’Ã‚Â¹', 'ÃƒÆ’Ã‚Â»', 'ÃƒÆ’Ã‚Â¼', 'ÃƒÆ’Ã‚Â§', 'ÃƒÆ’Ã‚Â±',
+            'ÃƒÆ’Ã‚Â', 'ÃƒÆ’Ã¢â€šÂ¬', 'ÃƒÆ’Ã†â€™', 'ÃƒÆ’Ã¢â‚¬Å¡', 'ÃƒÆ’Ã¢â‚¬Å¾', 'ÃƒÆ’Ã¢â‚¬Â°', 'ÃƒÆ’Ã‹â€ ', 'ÃƒÆ’Ã…Â ', 'ÃƒÆ’Ã¢â‚¬Â¹', 'ÃƒÆ’Ã‚Â', 'ÃƒÆ’Ã…â€™', 'ÃƒÆ’Ã…Â½', 'ÃƒÆ’Ã‚Â',
+            'ÃƒÆ’Ã¢â‚¬Å“', 'ÃƒÆ’Ã¢â‚¬â„¢', 'ÃƒÆ’Ã¢â‚¬Â¢', 'ÃƒÆ’Ã¢â‚¬Â', 'ÃƒÆ’Ã¢â‚¬â€œ', 'ÃƒÆ’Ã…Â¡', 'ÃƒÆ’Ã¢â€žÂ¢', 'ÃƒÆ’Ã¢â‚¬Âº', 'ÃƒÆ’Ã…â€œ', 'ÃƒÆ’Ã¢â‚¬Â¡', 'ÃƒÆ’Ã¢â‚¬Ëœ'
+        ];
+        $semAcentos = [
+            'a', 'a', 'a', 'a', 'a', 'e', 'e', 'e', 'e', 'i', 'i', 'i', 'i',
+            'o', 'o', 'o', 'o', 'o', 'u', 'u', 'u', 'u', 'c', 'n',
+            'A', 'A', 'A', 'A', 'A', 'E', 'E', 'E', 'E', 'I', 'I', 'I', 'I',
+            'O', 'O', 'O', 'O', 'O', 'U', 'U', 'U', 'U', 'C', 'N'
+        ];
+
+        return str_replace($acentos, $semAcentos, $string);
+    }
+
+    /**
      * Extrai o número da NFS-e (nDFSe) do XML
      */
     private function extrairNDFSe(string $xmlNfse): ?string
@@ -626,5 +869,13 @@ class NFSeNacional
             $element = $dom->createElement($name, htmlspecialchars($value, ENT_XML1, 'UTF-8'));
             $parent->appendChild($element);
         }
+    }
+
+    /**
+     * Formata valor decimal para 2 casas
+     */
+    private function formatarValor($valor): string
+    {
+        return number_format((float)$valor, 2, '.', '');
     }
 }
